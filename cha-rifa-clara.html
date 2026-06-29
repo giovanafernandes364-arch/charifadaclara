@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chá Rifa da Clara 🦊</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --cream:    #FAF3EC;
+      --terra:    #C4714A;
+      --terra-dk: #A85A36;
+      --terra-lt: #E8A882;
+      --sand:     #E8D5C0;
+      --green:    #8FAF7A;
+      --pink:     #F2B8C0;
+      --gold:     #F0C050;
+      --text:     #5C3D2A;
+      --muted:    #A8866A;
+      --white:    #FFFAF5;
+      --taken-bg: #D9A88A;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+    .page-border { max-width: 680px; margin: 0 auto; padding: 20px; }
+    .frame {
+      border: 2px solid var(--pink); border-radius: 28px;
+      padding: 28px 24px; background: var(--white); position: relative; overflow: hidden;
+    }
+    .frame::before {
+      content: ''; position: absolute; inset: 4px;
+      border: 1px solid rgba(242,184,192,0.4); border-radius: 24px; pointer-events: none;
+    }
+
+    .deco { position: absolute; pointer-events: none; user-select: none; font-size: 28px; opacity: 0.85; }
+    .deco-bee-tr  { top: 14px; right: 18px; font-size: 32px; animation: wiggle 3s ease-in-out infinite; }
+    .deco-bee-l   { top: 180px; left: 10px; font-size: 24px; animation: wiggle 4s ease-in-out infinite 1s; }
+    .deco-flower-tl { top: 16px; left: 18px; font-size: 24px; }
+    .deco-flower-tr { top: 60px; right: 52px; font-size: 18px; }
+    .deco-flower-br { bottom: 200px; right: 12px; font-size: 22px; }
+    .deco-star1 { top: 24px; right: 70px; font-size: 18px; color: var(--gold); }
+    .deco-star2 { bottom: 210px; left: 30px; font-size: 16px; color: var(--gold); }
+    .deco-star3 { bottom: 260px; right: 44px; font-size: 14px; color: var(--gold); }
+    @keyframes wiggle {
+      0%,100% { transform: rotate(-6deg) translateY(0); }
+      50%      { transform: rotate(6deg) translateY(-4px); }
+    }
+
+    .hero { text-align: center; padding-bottom: 12px; position: relative; }
+    .hero-sub { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--terra); letter-spacing: 1px; }
+    .hero-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: clamp(3.4rem, 12vw, 5rem); color: var(--terra-dk); line-height: 1; margin-bottom: 8px; }
+    .foliage { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 18px; font-size: 26px; }
+    .foliage-heart { font-size: 20px; }
+    .badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+    .badge { background: var(--terra); color: #fff; font-weight: 800; font-size: 14px; padding: 7px 20px; border-radius: 100px; letter-spacing: 0.5px; }
+
+    /* Loading */
+    .loading-bar {
+      text-align: center; padding: 40px 20px; color: var(--muted); font-size: 15px; font-weight: 700;
+    }
+    .spinner {
+      display: inline-block; width: 32px; height: 32px;
+      border: 3px solid var(--sand); border-top-color: var(--terra);
+      border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .counter-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; margin-bottom: 18px; font-size: 13px; color: var(--muted); flex-wrap: wrap;
+    }
+    .legend-dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+    .dot-free  { background: var(--terra); }
+    .dot-taken { background: var(--taken-bg); }
+    .progress-bar { width: 140px; height: 8px; background: var(--sand); border-radius: 100px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--terra-lt), var(--terra-dk)); border-radius: 100px; transition: width 0.4s ease; width: 0%; }
+
+    .grid-section { margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 7px; }
+    .num-btn {
+      aspect-ratio: 1; border-radius: 50%; border: none;
+      background: var(--terra); color: #fff;
+      font-size: clamp(11px, 2.5vw, 15px); font-weight: 800;
+      cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s;
+      font-family: 'Nunito', sans-serif; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 0 var(--terra-dk);
+    }
+    .num-btn:hover:not(.taken) { transform: translateY(-3px) scale(1.08); box-shadow: 0 6px 0 var(--terra-dk); background: var(--terra-lt); }
+    .num-btn:active:not(.taken) { transform: translateY(1px); box-shadow: 0 1px 0 var(--terra-dk); }
+    .num-btn.taken { background: var(--taken-bg); box-shadow: 0 3px 0 #b8806a; cursor: not-allowed; opacity: 0.7; text-decoration: line-through; }
+
+    .fox-footer { display: flex; align-items: flex-end; gap: 20px; padding-top: 12px; }
+    .fox-img { font-size: 90px; line-height: 1; flex-shrink: 0; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.12)); }
+    .fox-info { flex: 1; }
+    .fox-luck { background: var(--terra); color: #fff; font-weight: 800; font-size: 13px; padding: 6px 16px; border-radius: 100px; display: inline-block; margin-bottom: 10px; }
+    .fox-rules { list-style: none; font-size: 13px; color: var(--text); line-height: 2; }
+    .fox-rules li::before { content: '• '; color: var(--terra); font-weight: 800; }
+    .fox-rules li strong { color: var(--terra-dk); }
+    .size-guide { margin-top: 8px; background: var(--cream); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--muted); line-height: 1.9; }
+    .size-guide span { color: var(--terra-dk); font-weight: 700; }
+
+    /* MODAL */
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(92,61,42,0.55); backdrop-filter: blur(5px); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .overlay.active { display: flex; }
+    .modal { background: var(--white); border-radius: 28px; padding: 36px 28px 28px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 24px 60px rgba(92,61,42,0.28); position: relative; animation: pop 0.22s cubic-bezier(0.34,1.56,0.64,1); border: 2px solid var(--pink); }
+    @keyframes pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-close { position: absolute; top: 12px; right: 14px; background: var(--sand); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 16px; cursor: pointer; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+    .modal-close:hover { background: var(--pink); color: var(--terra-dk); }
+    .modal-num-circle { width: 70px; height: 70px; background: var(--terra); color: #fff; border-radius: 50%; font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; box-shadow: 0 5px 0 var(--terra-dk); }
+    .modal h2 { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--terra-dk); margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; }
+    .modal-size-badge { display: inline-block; background: var(--sand); color: var(--terra-dk); font-weight: 800; font-size: 13px; padding: 4px 14px; border-radius: 100px; margin-bottom: 22px; }
+    .choices { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn { display: flex; align-items: center; gap: 14px; padding: 15px 18px; border-radius: 16px; border: 2px solid var(--sand); background: var(--cream); cursor: pointer; text-align: left; transition: all 0.16s ease; font-family: 'Nunito', sans-serif; }
+    .choice-btn:hover { border-color: var(--terra); background: #faf0e8; transform: translateX(4px); }
+    .choice-icon { font-size: 30px; flex-shrink: 0; }
+    .choice-info strong { display: block; font-size: 15px; color: var(--terra-dk); font-weight: 800; }
+    .choice-info span { font-size: 12px; color: var(--muted); }
+    .choice-btn.btn-pix { background: linear-gradient(135deg, #4dba8a, #2e8b60); border-color: #2e8b60; }
+    .choice-btn.btn-pix:hover { background: linear-gradient(135deg, #3daa7a, #1f7a50); }
+    .choice-btn.btn-pix .choice-info strong, .choice-btn.btn-pix .choice-info span { color: #fff; }
+    .step { display: none; }
+    .step.active { display: block; }
+    #step-main { display: block; }
+    .name-input { width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid var(--sand); font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--text); background: var(--cream); margin-bottom: 14px; outline: none; transition: border-color 0.15s; }
+    .name-input:focus { border-color: var(--terra); }
+    .btn-confirm { width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--terra), var(--terra-dk)); color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; transition: opacity 0.15s; box-shadow: 0 4px 0 #8a3a20; }
+    .btn-confirm:hover { opacity: 0.9; }
+    .btn-confirm:active { transform: translateY(2px); box-shadow: 0 2px 0 #8a3a20; }
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; margin-top: 10px; font-family: 'Nunito', sans-serif; }
+    .btn-back:hover { color: var(--terra); }
+
+    /* Setup Banner */
+    .setup-banner {
+      background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 18px; font-size: 13px; line-height: 1.7; color: #856404;
+      display: none;
+    }
+    .setup-banner strong { color: #664d03; }
+    .setup-banner code { background: #ffeaa0; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
+    @media (max-width: 480px) {
+      .grid { gap: 5px; }
+      .num-btn { font-size: 10px; }
+      .fox-footer { flex-direction: column; align-items: center; text-align: center; }
+      .fox-img { font-size: 70px; }
+      .frame { padding: 20px 14px; }
+      .page-border { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-border">
+  <div class="frame">
+
+    <span class="deco deco-bee-tr">🐝</span>
+    <span class="deco deco-bee-l">🐝</span>
+    <span class="deco deco-flower-tl">🌸</span>
+    <span class="deco deco-flower-tr">🌸</span>
+    <span class="deco deco-flower-br">🌸</span>
+    <span class="deco deco-star1">✦</span>
+    <span class="deco deco-star2">✦</span>
+    <span class="deco deco-star3">✦</span>
+
+    <div class="hero">
+      <p class="hero-sub">Chá Rifa da</p>
+      <h1 class="hero-name">Clara</h1>
+      <div class="foliage">🌿 <span class="foliage-heart">🩷</span> 🌿</div>
+      <div class="badges">
+        <span class="badge">🎁 Prêmio: R$150,00</span>
+        <span class="badge">📅 Sorteio: 03/10</span>
+      </div>
+    </div>
+
+    <!-- Banner de configuração (visível até configurar o Firebase) -->
+    <div class="setup-banner" id="setup-banner">
+      ⚙️ <strong>Atenção:</strong> Para os números ficarem salvos para todo mundo, configure o Firebase.<br/>
+      Substitua <code>COLE_AQUI_SUA_CONFIG_FIREBASE</code> no código com suas credenciais.<br/>
+      <a href="https://console.firebase.google.com" target="_blank" style="color:var(--terra-dk);font-weight:700">→ Criar projeto gratuito no Firebase</a>
+    </div>
+
+    <div class="counter-row">
+      <span><span class="legend-dot dot-free"></span> Disponível</span>
+      <span><span class="legend-dot dot-taken"></span> Reservado</span>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <span id="taken-count" style="font-weight:700;color:var(--terra)">0/100</span>
+    </div>
+
+    <div class="grid-section">
+      <div id="loading" class="loading-bar">
+        <div class="spinner"></div><br/>Carregando números...
+      </div>
+      <div class="grid" id="grid" style="display:none"></div>
+    </div>
+
+    <div class="fox-footer">
+      <div class="fox-img">🦊</div>
+      <div class="fox-info">
+        <div class="fox-luck">🍀 BOA SORTE PRA VOCÊ!</div>
+        <ul class="fox-rules">
+          <li>Cada número = 1 fralda <strong>ou</strong> Pix de <strong>R$40,00</strong></li>
+          <li>Chave Pix: <strong>(31) 99572-0096</strong></li>
+        </ul>
+        <div class="size-guide">
+          <span>Nº 1 ao 15</span> → Fralda P<br/>
+          <span>Nº 16 ao 55</span> → Fralda M<br/>
+          <span>Nº 56 ao 100</span> → Fralda G
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="closeOnBg(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div id="step-main">
+      <div class="modal-num-circle" id="modal-num-circle">01</div>
+      <h2>Número <span id="modal-num-text">01</span>!</h2>
+      <p class="modal-sub">Ótima escolha! Como você quer contribuir?</p>
+      <div class="modal-size-badge" id="modal-size-badge">Fralda P</div>
+      <div class="choices">
+        <button class="choice-btn" onclick="goFralda()">
+          <span class="choice-icon">🍼</span>
+          <div class="choice-info">
+            <strong>Enviar uma fralda</strong>
+            <span>Combino a entrega com a mamãe</span>
+          </div>
+        </button>
+        <button class="choice-btn btn-pix" onclick="goPix()">
+          <span class="choice-icon">💸</span>
+          <div class="choice-info">
+            <strong>Pagar via Pix</strong>
+            <span>R$ 40,00 — rápido e fácil</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div id="step-fralda" class="step">
+      <div style="font-size:52px;margin-bottom:12px">🍼</div>
+      <h2>Que fofura! 💕</h2>
+      <p class="modal-sub">Informe seu nome para reservar o número <strong id="nf-num"></strong>.</p>
+      <input class="name-input" id="input-fralda" type="text" placeholder="Seu nome completo" maxlength="60"/>
+      <button class="btn-confirm" id="btn-fralda-confirm" onclick="confirmFralda()">Reservar meu número ✨</button>
+      <br/><button class="btn-back" onclick="backMain()">← Voltar</button>
+    </div>
+
+    <div id="step-pix" class="step">
+      <div style="font-size:52px;margin-bottom:12px">💸</div>
+      <h2>Pix na hora!</h2>
+      <p class="modal-sub">Informe seu nome para reservar o número <strong id="np-num"></strong> e ir ao pagamento.</p>
+      <input class="name-input" id="input-pix" type="text" placeholder="Seu nome completo" maxlength="60"/>
+      <button class="btn-confirm" id="btn-pix-confirm" onclick="confirmPix()">Ir para o Pix 🟢</button>
+      <br/><button class="btn-back" onclick="backMain()">← Voltar</button>
+    </div>
+
+    <div id="step-success" class="step">
+      <div style="font-size:60px;margin-bottom:14px">🎉</div>
+      <h2>Reservado com sucesso!</h2>
+      <p class="modal-sub" id="success-msg"></p>
+      <div style="background:var(--cream);border-radius:14px;padding:14px;margin:16px 0;font-size:13px;color:var(--terra-dk);line-height:1.8">
+        📦 Combine a entrega da fralda com a mamãe:<br/>
+        📱 <strong>WhatsApp: (31) 99572-0096</strong>
+      </div>
+      <button class="btn-confirm" onclick="closeModal()">Fechar 🦊</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ══════════════════════════════════════════════════════════
+  // 🔧 CONFIGURAÇÃO DO FIREBASE
+  // 1. Acesse https://console.firebase.google.com
+  // 2. Crie um projeto → Realtime Database → Criar banco
+  // 3. Regras: mude para { "rules": { ".read": true, ".write": true } }
+  // 4. Copie as configurações do seu app e cole aqui abaixo:
+  // ══════════════════════════════════════════════════════════
+  const firebaseConfig = {
+    apiKey:            "COLE_SUA_API_KEY",
+    authDomain:        "COLE_SEU_AUTH_DOMAIN",
+    databaseURL:       "COLE_SUA_DATABASE_URL",
+    projectId:         "COLE_SEU_PROJECT_ID",
+    storageBucket:     "COLE_SEU_STORAGE_BUCKET",
+    messagingSenderId: "COLE_SEU_MESSAGING_ID",
+    appId:             "COLE_SEU_APP_ID"
+  };
+  // ══════════════════════════════════════════════════════════
+
+  const PIX_KEY  = '31995720096';
+  const VALOR    = 40.00;
+
+  let taken = {};
+  let sel   = null;
+  let db    = null;
+  let configured = false;
+
+  function fralda(n) {
+    if (n <= 15) return 'Fralda P';
+    if (n <= 55) return 'Fralda M';
+    return 'Fralda G';
+  }
+
+  // Verifica se o Firebase foi configurado
+  function isConfigured() {
+    return firebaseConfig.apiKey !== "COLE_SUA_API_KEY" && firebaseConfig.databaseURL !== "COLE_SUA_DATABASE_URL";
+  }
+
+  function buildGrid() {
+    const g = document.getElementById('grid');
+    g.innerHTML = '';
+    for (let i = 1; i <= 100; i++) {
+      const b = document.createElement('button');
+      b.className = 'num-btn' + (taken[i] ? ' taken' : '');
+      b.textContent = i;
+      b.id = 'btn-' + i;
+      if (taken[i]) b.title = `Reservado por ${taken[i].nome}`;
+      else b.onclick = () => openModal(i);
+      g.appendChild(b);
+    }
+    updateCount();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('grid').style.display    = 'grid';
+  }
+
+  function updateCount() {
+    const t = Object.keys(taken).length;
+    document.getElementById('taken-count').textContent = t + '/100';
+    document.getElementById('progress-fill').style.width = t + '%';
+  }
+
+  function updateBtn(num) {
+    const b = document.getElementById('btn-' + num);
+    if (!b) return;
+    if (taken[num]) {
+      b.classList.add('taken');
+      b.title = `Reservado por ${taken[num].nome}`;
+      b.onclick = null;
+    }
+  }
+
+  // ── Inicializa Firebase ou modo local ──
+  if (isConfigured()) {
+    configured = true;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+      // Escuta mudanças em tempo real
+      onValue(ref(db, 'numeros'), (snap) => {
+        taken = snap.val() || {};
+        buildGrid();
+      });
+    } catch(e) {
+      console.error('Erro Firebase:', e);
+      fallbackLocal();
+    }
+  } else {
+    // Modo fallback: localStorage (avisa que não está configurado)
+    document.getElementById('setup-banner').style.display = 'block';
+    fallbackLocal();
+  }
+
+  function fallbackLocal() {
+    try { const s = localStorage.getItem('cha_clara_v3'); if(s) taken = JSON.parse(s); } catch(e){}
+    buildGrid();
+  }
+
+  async function reservar(num, nome, tipo) {
+    taken[num] = { nome, tipo, ts: Date.now() };
+    if (db) {
+      await set(ref(db, 'numeros/' + num), taken[num]);
+    } else {
+      localStorage.setItem('cha_clara_v3', JSON.stringify(taken));
+      updateBtn(num);
+      updateCount();
+    }
+  }
+
+  // ── Modal ──
+  window.openModal = function(n) {
+    sel = n;
+    const pad = String(n).padStart(2,'0');
+    document.getElementById('modal-num-circle').textContent = pad;
+    document.getElementById('modal-num-text').textContent   = pad;
+    document.getElementById('nf-num').textContent           = pad;
+    document.getElementById('np-num').textContent           = pad;
+    document.getElementById('modal-size-badge').textContent = fralda(n);
+    showStep('main');
+    document.getElementById('overlay').classList.add('active');
+  }
+  window.closeModal = function() {
+    document.getElementById('overlay').classList.remove('active');
+    sel = null;
+  }
+  window.closeOnBg = function(e) { if (e.target===document.getElementById('overlay')) window.closeModal(); }
+  window.backMain  = function() { showStep('main'); }
+  window.goFralda  = function() { showStep('fralda'); document.getElementById('input-fralda').focus(); }
+  window.goPix     = function() { showStep('pix');    document.getElementById('input-pix').focus(); }
+
+  function showStep(s) {
+    document.getElementById('step-main').style.display   = s==='main'    ? 'block' : 'none';
+    document.getElementById('step-fralda').classList.toggle('active', s==='fralda');
+    document.getElementById('step-pix').classList.toggle('active',    s==='pix');
+    document.getElementById('step-success').classList.toggle('active', s==='success');
+  }
+
+  window.confirmFralda = async function() {
+    const nome = document.getElementById('input-fralda').value.trim();
+    if (!nome) { alert('Por favor, informe seu nome 😊'); return; }
+    const btn = document.getElementById('btn-fralda-confirm');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    await reservar(sel, nome, 'fralda');
+    document.getElementById('success-msg').textContent =
+      `${nome}, número ${String(sel).padStart(2,'0')} reservado! 🍼 Obrigada por contribuir com o chá da Clara!`;
+    document.getElementById('input-fralda').value = '';
+    btn.disabled = false; btn.textContent = 'Reservar meu número ✨';
+    showStep('success');
+  }
+
+  window.confirmPix = async function() {
+    const nome = document.getElementById('input-pix').value.trim();
+    if (!nome) { alert('Por favor, informe seu nome 😊'); return; }
+    const btn = document.getElementById('btn-pix-confirm');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    await reservar(sel, nome, 'pix');
+    const numSel = sel;
+    document.getElementById('input-pix').value = '';
+    btn.disabled = false; btn.textContent = 'Ir para o Pix 🟢';
+    window.closeModal();
+    const desc    = `Rifa Clara N${String(numSel).padStart(2,'0')}`;
+    const payload = pixPayload(PIX_KEY, 'Clara', 'Belo Horizonte', VALOR, desc);
+    const msg = encodeURIComponent(
+      `Olá! Eu ${nome} reservei o número ${String(numSel).padStart(2,'0')} da Chá Rifa da Clara! 🦊\n\n` +
+      `Vou pagar R$${VALOR.toFixed(2).replace('.',',')} via Pix para:\n📱 Chave: ${PIX_KEY}\n\n` +
+      `Pix Copia e Cola:\n${payload}`
+    );
+    window.open(`https://wa.me/5531995720096?text=${msg}`, '_blank');
+  }
+
+  function campo(id, v) { v=String(v); return id+String(v.length).padStart(2,'0')+v; }
+  function pixPayload(key, nome, cidade, valor, desc) {
+    const mai = campo('26', campo('00','BR.GOV.BCB.PIX') + campo('01', key));
+    let p = campo('00','01') + mai + campo('52','0000') + campo('53','986') +
+            campo('54', valor.toFixed(2)) + campo('58','BR') +
+            campo('59', nome.substring(0,25)) + campo('60', cidade.substring(0,15)) +
+            campo('62', campo('05', desc.substring(0,25))) + '6304';
+    let crc=0xFFFF;
+    for(let i=0;i<p.length;i++){crc^=p.charCodeAt(i)<<8;for(let j=0;j<8;j++)crc=(crc&0x8000)?(crc<<1)^0x1021:crc<<1;}
+    return p + (crc&0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+  }
+</script>
+</body>
+</html>
