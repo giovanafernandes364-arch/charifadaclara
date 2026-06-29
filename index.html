@@ -132,14 +132,7 @@
     .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; margin-top: 10px; font-family: 'Nunito', sans-serif; }
     .btn-back:hover { color: var(--terra); }
 
-    /* Setup Banner */
-    .setup-banner {
-      background: #fff3cd; border: 1.5px solid #ffc107; border-radius: 14px;
-      padding: 14px 16px; margin-bottom: 18px; font-size: 13px; line-height: 1.7; color: #856404;
-      display: none;
-    }
-    .setup-banner strong { color: #664d03; }
-    .setup-banner code { background: #ffeaa0; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+
 
     @media (max-width: 480px) {
       .grid { gap: 5px; }
@@ -173,13 +166,6 @@
         <span class="badge">🎁 Prêmio: R$150,00</span>
         <span class="badge">📅 Sorteio: 03/10</span>
       </div>
-    </div>
-
-    <!-- Banner de configuração (visível até configurar o Firebase) -->
-    <div class="setup-banner" id="setup-banner">
-      ⚙️ <strong>Atenção:</strong> Para os números ficarem salvos para todo mundo, configure o Firebase.<br/>
-      Substitua <code>COLE_AQUI_SUA_CONFIG_FIREBASE</code> no código com suas credenciais.<br/>
-      <a href="https://console.firebase.google.com" target="_blank" style="color:var(--terra-dk);font-weight:700">→ Criar projeto gratuito no Firebase</a>
     </div>
 
     <div class="counter-row">
@@ -275,36 +261,13 @@
   </div>
 </div>
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  // ══════════════════════════════════════════════════════════
-  // 🔧 CONFIGURAÇÃO DO FIREBASE
-  // 1. Acesse https://console.firebase.google.com
-  // 2. Crie um projeto → Realtime Database → Criar banco
-  // 3. Regras: mude para { "rules": { ".read": true, ".write": true } }
-  // 4. Copie as configurações do seu app e cole aqui abaixo:
-  // ══════════════════════════════════════════════════════════
-  const firebaseConfig = {
-    apiKey:            "COLE_SUA_API_KEY",
-    authDomain:        "COLE_SEU_AUTH_DOMAIN",
-    databaseURL:       "COLE_SUA_DATABASE_URL",
-    projectId:         "COLE_SEU_PROJECT_ID",
-    storageBucket:     "COLE_SEU_STORAGE_BUCKET",
-    messagingSenderId: "COLE_SEU_MESSAGING_ID",
-    appId:             "COLE_SEU_APP_ID"
-  };
-  // ══════════════════════════════════════════════════════════
-
-  const PIX_KEY  = '31995720096';
-  const VALOR    = 40.00;
+<script>
+  const PIX_KEY = '31995720096';
+  const VALOR   = 40.00;
+  const KEY     = 'cha_clara_v3';
 
   let taken = {};
   let sel   = null;
-  let db    = null;
-  let configured = false;
 
   function fralda(n) {
     if (n <= 15) return 'Fralda P';
@@ -312,9 +275,11 @@
     return 'Fralda G';
   }
 
-  // Verifica se o Firebase foi configurado
-  function isConfigured() {
-    return firebaseConfig.apiKey !== "COLE_SUA_API_KEY" && firebaseConfig.databaseURL !== "COLE_SUA_DATABASE_URL";
+  function load() {
+    try { const s = localStorage.getItem(KEY); if (s) taken = JSON.parse(s); } catch(e) {}
+  }
+  function save() {
+    localStorage.setItem(KEY, JSON.stringify(taken));
   }
 
   function buildGrid() {
@@ -343,52 +308,19 @@
   function updateBtn(num) {
     const b = document.getElementById('btn-' + num);
     if (!b) return;
-    if (taken[num]) {
-      b.classList.add('taken');
-      b.title = `Reservado por ${taken[num].nome}`;
-      b.onclick = null;
-    }
+    b.classList.add('taken');
+    b.title = `Reservado por ${taken[num].nome}`;
+    b.onclick = null;
   }
 
-  // ── Inicializa Firebase ou modo local ──
-  if (isConfigured()) {
-    configured = true;
-    try {
-      const app = initializeApp(firebaseConfig);
-      db = getDatabase(app);
-      // Escuta mudanças em tempo real
-      onValue(ref(db, 'numeros'), (snap) => {
-        taken = snap.val() || {};
-        buildGrid();
-      });
-    } catch(e) {
-      console.error('Erro Firebase:', e);
-      fallbackLocal();
-    }
-  } else {
-    // Modo fallback: localStorage (avisa que não está configurado)
-    document.getElementById('setup-banner').style.display = 'block';
-    fallbackLocal();
-  }
-
-  function fallbackLocal() {
-    try { const s = localStorage.getItem('cha_clara_v3'); if(s) taken = JSON.parse(s); } catch(e){}
-    buildGrid();
-  }
-
-  async function reservar(num, nome, tipo) {
+  function reservar(num, nome, tipo) {
     taken[num] = { nome, tipo, ts: Date.now() };
-    if (db) {
-      await set(ref(db, 'numeros/' + num), taken[num]);
-    } else {
-      localStorage.setItem('cha_clara_v3', JSON.stringify(taken));
-      updateBtn(num);
-      updateCount();
-    }
+    save();
+    updateBtn(num);
+    updateCount();
   }
 
-  // ── Modal ──
-  window.openModal = function(n) {
+  function openModal(n) {
     sel = n;
     const pad = String(n).padStart(2,'0');
     document.getElementById('modal-num-circle').textContent = pad;
@@ -399,45 +331,39 @@
     showStep('main');
     document.getElementById('overlay').classList.add('active');
   }
-  window.closeModal = function() {
+  function closeModal() {
     document.getElementById('overlay').classList.remove('active');
     sel = null;
   }
-  window.closeOnBg = function(e) { if (e.target===document.getElementById('overlay')) window.closeModal(); }
-  window.backMain  = function() { showStep('main'); }
-  window.goFralda  = function() { showStep('fralda'); document.getElementById('input-fralda').focus(); }
-  window.goPix     = function() { showStep('pix');    document.getElementById('input-pix').focus(); }
+  function closeOnBg(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+  function backMain()   { showStep('main'); }
+  function goFralda()   { showStep('fralda'); document.getElementById('input-fralda').focus(); }
+  function goPix()      { showStep('pix');    document.getElementById('input-pix').focus(); }
 
   function showStep(s) {
-    document.getElementById('step-main').style.display   = s==='main'    ? 'block' : 'none';
-    document.getElementById('step-fralda').classList.toggle('active', s==='fralda');
-    document.getElementById('step-pix').classList.toggle('active',    s==='pix');
-    document.getElementById('step-success').classList.toggle('active', s==='success');
+    document.getElementById('step-main').style.display = s === 'main' ? 'block' : 'none';
+    document.getElementById('step-fralda').classList.toggle('active',  s === 'fralda');
+    document.getElementById('step-pix').classList.toggle('active',     s === 'pix');
+    document.getElementById('step-success').classList.toggle('active', s === 'success');
   }
 
-  window.confirmFralda = async function() {
+  function confirmFralda() {
     const nome = document.getElementById('input-fralda').value.trim();
     if (!nome) { alert('Por favor, informe seu nome 😊'); return; }
-    const btn = document.getElementById('btn-fralda-confirm');
-    btn.disabled = true; btn.textContent = 'Salvando...';
-    await reservar(sel, nome, 'fralda');
+    reservar(sel, nome, 'fralda');
     document.getElementById('success-msg').textContent =
       `${nome}, número ${String(sel).padStart(2,'0')} reservado! 🍼 Obrigada por contribuir com o chá da Clara!`;
     document.getElementById('input-fralda').value = '';
-    btn.disabled = false; btn.textContent = 'Reservar meu número ✨';
     showStep('success');
   }
 
-  window.confirmPix = async function() {
+  function confirmPix() {
     const nome = document.getElementById('input-pix').value.trim();
     if (!nome) { alert('Por favor, informe seu nome 😊'); return; }
-    const btn = document.getElementById('btn-pix-confirm');
-    btn.disabled = true; btn.textContent = 'Salvando...';
-    await reservar(sel, nome, 'pix');
     const numSel = sel;
+    reservar(numSel, nome, 'pix');
     document.getElementById('input-pix').value = '';
-    btn.disabled = false; btn.textContent = 'Ir para o Pix 🟢';
-    window.closeModal();
+    closeModal();
     const desc    = `Rifa Clara N${String(numSel).padStart(2,'0')}`;
     const payload = pixPayload(PIX_KEY, 'Clara', 'Belo Horizonte', VALOR, desc);
     const msg = encodeURIComponent(
@@ -448,17 +374,20 @@
     window.open(`https://wa.me/5531995720096?text=${msg}`, '_blank');
   }
 
-  function campo(id, v) { v=String(v); return id+String(v.length).padStart(2,'0')+v; }
+  function campo(id, v) { v = String(v); return id + String(v.length).padStart(2,'0') + v; }
   function pixPayload(key, nome, cidade, valor, desc) {
     const mai = campo('26', campo('00','BR.GOV.BCB.PIX') + campo('01', key));
     let p = campo('00','01') + mai + campo('52','0000') + campo('53','986') +
             campo('54', valor.toFixed(2)) + campo('58','BR') +
             campo('59', nome.substring(0,25)) + campo('60', cidade.substring(0,15)) +
             campo('62', campo('05', desc.substring(0,25))) + '6304';
-    let crc=0xFFFF;
-    for(let i=0;i<p.length;i++){crc^=p.charCodeAt(i)<<8;for(let j=0;j<8;j++)crc=(crc&0x8000)?(crc<<1)^0x1021:crc<<1;}
-    return p + (crc&0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+    let crc = 0xFFFF;
+    for (let i = 0; i < p.length; i++) { crc ^= p.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1; }
+    return p + (crc & 0xFFFF).toString(16).toUpperCase().padStart(4,'0');
   }
+
+  load();
+  buildGrid();
 </script>
 </body>
 </html>
